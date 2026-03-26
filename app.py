@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, url_for
 import pandas as pd
 import os
 from utils.analysis import analyze_data, detect_patterns
@@ -10,16 +10,23 @@ app.secret_key = "secret"
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-users = {}  # simple storage (hackathon)
+# create uploads folder if not exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+users = {}  # temporary storage
 
 # ---------------- LOGIN ----------------
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        name = request.form["name"]
+        name = request.form.get("name")
+
         if name in users:
             session["user"] = name
-            return redirect("/dashboard")
+            return redirect(url_for("dashboard"))
+        else:
+            return "User not found. Please register."
+
     return render_template("login.html")
 
 
@@ -27,13 +34,21 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        
+        name = request.form.get("name")
+        salary_input = request.form.get("salary")
+
+        # validation first
+        if not name or not salary_input:
+            return "Please fill all required fields"
+
         try:
-            salary = int(request.form.get("salary", 0))
-        except:
+            salary = int(salary_input)
+        except ValueError:
             salary = 0
 
         user_data = {
-            "name": request.form.get("name"),
+            "name": name,
             "age": request.form.get("age"),
             "profession": request.form.get("profession"),
             "salary": salary,
@@ -41,42 +56,52 @@ def register():
             "investment": request.form.get("investment")
         }
 
-        users[user_data["name"]] = user_data
-        session["user"] = user_data["name"]
+        users[name] = user_data
+        session["user"] = name
 
-        if not request.form["name"] or not request.form["salary"]:
-            return "Please fill all required fields"
+        return redirect(url_for("dashboard"))
 
-        return redirect("/dashboard")
+    return render_template("register.html")
 
 
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
-    user = users.get(session.get("user"))
+    
+    # 🔐 protect route
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    user = users.get(session["user"])
 
     summary = None
     patterns = []
     response = None
 
-    if request.method == "POST":
+    # 📄 FILE UPLOAD
+    if request.method == "POST" and "file" in request.files:
         file = request.files["file"]
-        
-        if file:
+
+        if file.filename != "":
             path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
             file.save(path)
-            
+
             df = pd.read_csv(path)
-            
+
             summary = analyze_data(df)
             patterns = detect_patterns(summary)
 
             session["summary"] = summary.to_dict()
 
-    query = request.args.get("query")
+    # 🤖 CHATBOT
+    query = request.form.get("query")
 
     if query:
-        response = financial_chatbot(query, user, session.get("summary"))
+        response = financial_chatbot(
+            query,
+            user,
+            session.get("summary", {})
+        )
 
     return render_template(
         "dashboard.html",
