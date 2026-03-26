@@ -1,34 +1,41 @@
-from openai import OpenAI
+from google import genai
+import os
 
-client = OpenAI(api_key="YOUR_API_KEY")
+# Initialize the client. 
+# NOTE: It's best practice to remove the hardcoded API key and use environment variables.
+# If you set an environment variable named GEMINI_API_KEY, you can just use `client = genai.Client()`
+client = genai.Client(api_key=os.getenv("API_KEY"))
 
 def financial_chatbot(query, user, summary):
+    try:
+        prompt = f"""
+        You are an empathetic but highly practical financial advisor.
 
-    prompt = f"""
-    You are a financial advisor.
+        User Context:
+        Name: {user['name']}
+        Age: {user['age']}
+        Salary: ₹{user['salary']}
+        Profession: {user['profession']}
+        Investment Interest: {user['investment']}
 
-    User:
-    Name: {user['name']}
-    Age: {user['age']}
-    Salary: ₹{user['salary']}
-    Profession: {user['profession']}
-    Investment Interest: {user['investment']}
+        Spending Data:
+        {summary}
 
-    Spending:
-    {summary}
+        User Question:
+        {query}
 
-    Question:
-    {query}
+        Give practical advice with reasoning.
+        """
 
-    Give practical advice with reasoning.
-    """
+        # The new method for calling the model
+        # The updated method
+        response = client.models.generate_content(
+            model="gemini-2.5-flash", 
+            contents=prompt
+        )
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a financial expert."},
-            {"role": "user", "content": prompt}
-        ]
-    )
+        return response.text
 
-    return response.choices[0].message.content
+    except Exception as e:
+        print("Gemini Error:", e)
+        return "⚠️ AI service unavailable. Try again."

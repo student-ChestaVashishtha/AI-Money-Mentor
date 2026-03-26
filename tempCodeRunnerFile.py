@@ -6,7 +6,7 @@ from utils.analysis import analyze_data, detect_patterns
 from utils.chatbot import financial_chatbot
 
 app = Flask(__name__)
-app.secret_key = "super_secret_hackathon_key"
+app.secret_key = "super_secret_hackathon_keyz"
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True) # Ensure folder exists

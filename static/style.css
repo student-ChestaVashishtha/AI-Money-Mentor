@@ -162,3 +162,53 @@ a:hover { color: var(--primary-hover); }
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
 }
+
+/* Container for the AI's answer */
+.ai-response {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #334155; /* Soft dark gray for readability */
+    background-color: #f8fafc; /* Very light, clean background */
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Format the ### Headings */
+.ai-response h3 {
+    color: #1d4ed8; /* A professional, trustworthy blue */
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 6px;
+}
+
+/* Remove the top margin from the very first heading so it sits flush */
+.ai-response h3:first-child {
+    margin-top: 0;
+}
+
+/* Format the paragraphs */
+.ai-response p {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+/* Format the **Bold** text */
+.ai-response strong {
+    color: #0f172a; /* Make bold text slightly darker so it pops */
+    font-weight: 700;
+}
+
+/* Format the bullet point lists */
+.ai-response ul {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+}
+
+.ai-response li {
+    margin-bottom: 0.5rem;
+}

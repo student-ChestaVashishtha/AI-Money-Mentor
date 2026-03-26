@@ -4,6 +4,7 @@ import os
 import json
 from utils.analysis import analyze_data, detect_patterns
 from utils.chatbot import financial_chatbot
+import markdown
 
 app = Flask(__name__)
 app.secret_key = "super_secret_hackathon_key"
@@ -51,10 +52,19 @@ def register():
 
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
+    # 1. Check if they have a session cookie at all
     if "user" not in session:
         return redirect(url_for("login"))
     
     user = users.get(session["user"])
+
+    # 2. CRITICAL FIX: Check if the user actually exists in the database/dictionary
+    # If the server restarted and wiped the dictionary, clear their dead session cookie.
+    if user is None:
+        session.clear()
+        flash("Session expired. Please register or log in again.", "error")
+        return redirect(url_for("register"))
+
     response = None
 
     # Retrieve existing data from session if it exists
@@ -77,7 +87,11 @@ def dashboard():
 
     query = request.args.get("query")
     if query:
-        response = financial_chatbot(query, user, summary)
+        # 1. Get the raw markdown string from the AI
+        raw_response = financial_chatbot(query, user, summary)
+        
+        # 2. Convert the markdown string into HTML
+        response = markdown.markdown(raw_response)
 
     return render_template(
         "dashboard.html",
@@ -86,7 +100,6 @@ def dashboard():
         patterns=patterns,
         response=response
     )
-
 @app.route("/logout")
 def logout():
     session.clear()

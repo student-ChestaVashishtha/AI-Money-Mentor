@@ -94,9 +94,8 @@
                 </form>
 
                 {% if response %}
-                <div class="chat-box">
-                    <div class="ai-message">Fin-Saarthi AI says:</div>
-                    <p>{{ response }}</p>
+                <div class="ai-response">
+                    {{ response | safe }}
                 </div>
                 {% endif %}
             </div>
