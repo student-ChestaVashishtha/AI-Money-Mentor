@@ -1,13 +1,28 @@
-<div class="container d-flex justify-content-center align-items-center" style="height:100vh;">
-  <div class="card col-md-4 text-center">
-    <h2>💰 FinSaarthi AI</h2>
-    <p>Login to your account</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Fin-Saarthi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="card auth-card">
+            <h2>Welcome Back</h2>
+            <form method="POST">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" class="form-control" required>
+                    <label>Passwprd</label>
+                    <input type="text" name="name" class="form-control" required>
 
-    <form method="POST">
-      <input class="form-control mb-3" name="name" placeholder="Enter Name">
-      <button class="btn btn-primary w-100">Login</button>
-    </form>
-
-    <a href="/register" class="mt-3">New user? Register</a>
-  </div>
-</div>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem;">
+                New User? <a href="{{ url_for('register') }}">Create Profile</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

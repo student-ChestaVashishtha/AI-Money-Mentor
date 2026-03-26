@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, flash
+from flask import Flask, render_template, request, redirect, session, url_for
 import pandas as pd
 import os
 import json
@@ -18,17 +18,11 @@ users = {}  # In-memory storage
 def login():
     if request.method == "POST":
         name = request.form.get("name")
-        
-        # If the user exists, log them in
         if name in users:
             session["user"] = name
             return redirect(url_for("dashboard"))
-        
-        # If the user DOES NOT exist, flash a message and send them to register
         else:
-            flash("You are not registered. Please register first.", "error")
-            return redirect(url_for("register"))
-            
+            return "User not found. Please register.", 400
     return render_template("login.html")
 
 @app.route("/register", methods=["GET", "POST"])
@@ -42,11 +36,9 @@ def register():
             "marital": request.form.get("marital"),
             "investment": request.form.get("investment")
         }
-    
         users[user_data["name"]] = user_data
         session["user"] = user_data["name"]
         return redirect(url_for("dashboard"))
-    
     return render_template("register.html")
 
 @app.route("/dashboard", methods=["GET", "POST"])

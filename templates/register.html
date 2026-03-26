@@ -1,28 +1,68 @@
-<div class="container mt-5">
-  <div class="card col-md-6 mx-auto">
-    <h2 class="text-center">🧠 Create Profile</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - Fin-Saarthi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Styling for the error message */
+        .alert {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-align: center;
+        }
+        .alert-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="card auth-card">
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            ⚠️ {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-    <form method="POST">
-
-      <input class="form-control mb-2" name="name" placeholder="Name">
-      <input class="form-control mb-2" name="age" placeholder="Age">
-      <input class="form-control mb-2" name="profession" placeholder="Profession">
-      <input class="form-control mb-2" name="salary" placeholder="Monthly Salary">
-
-      <label>Marital Status</label>
-      <select class="form-control mb-2" name="marital">
-        <option>Married</option>
-        <option>Unmarried</option>
-      </select>
-
-      <label>Investment Interest</label>
-      <select class="form-control mb-3" name="investment">
-        <option>Investing</option>
-        <option>Thinking</option>
-        <option>No Interest</option>
-      </select>
-
-      <button class="btn btn-primary w-100">Register</button>
-    </form>
-  </div>
-</div>
+            <h2>Create Profile</h2>
+            <form method="POST">
+                <div class="form-group"><label>Name</label><input type="text" name="name" class="form-control" required></div>
+                <div class="form-group"><label>Age</label><input type="number" name="age" class="form-control" required></div>
+                <div class="form-group"><label>Profession</label><input type="text" name="profession" class="form-control" required></div>
+                <div class="form-group"><label>Monthly Salary (₹)</label><input type="number" name="salary" class="form-control" required></div>
+                
+                <div class="form-group">
+                    <label>Marital Status</label>
+                    <select name="marital" class="form-control">
+                        <option value="Married">Married</option>
+                        <option value="Unmarried">Unmarried</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Investment Goal</label>
+                    <select name="investment" class="form-control">
+                        <option value="Investing">Actively Investing</option>
+                        <option value="Thinking">Thinking about it</option>
+                        <option value="No Interest">No Interest</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn" style="margin-top: 10px;">Register</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem;">
+                Already have an account? <a href="{{ url_for('login') }}">Login</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

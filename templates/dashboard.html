@@ -1,52 +1,106 @@
-<div class="container mt-4">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Fin-Saarthi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chat-box { background: #f9fafb; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; min-height: 100px; margin-top: 1rem; }
+        .ai-message { color: var(--primary-color); font-weight: 500; margin-bottom: 0.5rem; }
+        .upload-area { border: 2px dashed var(--border-color); padding: 2rem; text-align: center; border-radius: 8px; margin-bottom: 2rem;}
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-logo">🧠 Fin-Saarthi</div>
+            <ul class="nav-links">
+                <li><a href="#" class="active">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" style="color: #ef4444;">Logout</a></li>
+            </ul>
+        </aside>
 
-  <h2>👋 Welcome {{ user.name }}</h2>
+        <main class="main-content">
+            <header class="dashboard-header">
+                <div>
+                    <h1>Welcome, {{ user.name }}</h1>
+                    <p style="color: var(--text-muted);">{{ user.profession }} | Target: {{ user.investment }}</p>
+                </div>
+            </header>
 
-  <!-- Upload -->
-  <div class="card">
-    <h3>📄 Upload Financial Statement</h3>
-    <form method="POST" enctype="multipart/form-data">
-      <input class="form-control mb-2" type="file" name="file">
-      <button class="btn btn-primary">Upload</button>
-    </form>
-  </div>
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3>Upload Bank Statement (CSV)</h3>
+                <form method="POST" enctype="multipart/form-data" class="upload-area">
+                    <input type="file" name="file" accept=".csv" required style="margin-bottom: 1rem;">
+                    <br>
+                    <button type="submit" class="btn" style="width: auto;">Analyze Data</button>
+                </form>
+            </div>
 
-  {% if summary %}
-  <!-- Summary -->
-  <div class="card">
-    <h3>📊 Spending Summary</h3>
-    <ul>
-      {% for key, value in summary.items() %}
-        <li><b>{{ key }}</b>: ₹{{ value }}</li>
-      {% endfor %}
-    </ul>
-  </div>
+            {% if summary %}
+            <div class="grid-cards" style="margin-bottom: 2rem;">
+                <div class="card">
+                    <h3>Spending Breakdown</h3>
+                    <canvas id="spendingChart" style="max-height: 250px; margin-top: 1rem;"></canvas>
+                </div>
+                
+                <div class="card">
+                    <h3>AI Detected Patterns</h3>
+                    <ul style="margin-top: 1rem; list-style-type: none; padding-left: 0;">
+                        {% for p in patterns %}
+                            <li style="margin-bottom: 10px; padding: 10px; background: #fef2f2; border-radius: 6px; border-left: 4px solid #ef4444;">
+                                {{ p }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
 
-  <!-- Patterns -->
-  <div class="card">
-    <h3>⚠️ Insights</h3>
-    <ul>
-      {% for p in patterns %}
-        <li>{{ p }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
+            <script id="summary-data" type="application/json">
+                {{ summary | tojson | safe }}
+            </script>
 
-  <!-- AI Chat -->
-  <div class="card">
-    <h3>🤖 AI Financial Mentor</h3>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    const ctx = document.getElementById('spendingChart').getContext('2d');
+                    
+                    // Parse the data safely from the JSON script block
+                    const rawData = document.getElementById('summary-data').textContent;
+                    const summaryData = JSON.parse(rawData);
+                    
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(summaryData),
+                            datasets: [{
+                                data: Object.values(summaryData),
+                                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                });
+            </script>
+            {% endif %}
 
-    <form method="GET">
-      <input class="form-control mb-2" name="query" placeholder="Ask about savings, loan, investment...">
-      <button class="btn btn-primary">Ask AI</button>
-    </form>
+            <div class="card">
+                <h3>Ask your Financial AI</h3>
+                <form method="GET" style="display: flex; gap: 10px; margin-top: 1rem;">
+                    <input type="text" name="query" class="form-control" placeholder="E.g., How can I reduce my food expenses?" required>
+                    <button type="submit" class="btn" style="width: 120px;">Ask</button>
+                </form>
 
-    {% if response %}
-      <div class="ai-box">
-        {{ response }}
-      </div>
-    {% endif %}
-  </div>
-
-</div>
+                {% if response %}
+                <div class="chat-box">
+                    <div class="ai-message">Fin-Saarthi AI says:</div>
+                    <p>{{ response }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>
