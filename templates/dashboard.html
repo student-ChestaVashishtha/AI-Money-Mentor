@@ -1,0 +1,52 @@
+<div class="container mt-4">
+
+  <h2>👋 Welcome {{ user.name }}</h2>
+
+  <!-- Upload -->
+  <div class="card">
+    <h3>📄 Upload Financial Statement</h3>
+    <form method="POST" enctype="multipart/form-data">
+      <input class="form-control mb-2" type="file" name="file">
+      <button class="btn btn-primary">Upload</button>
+    </form>
+  </div>
+
+  {% if summary %}
+  <!-- Summary -->
+  <div class="card">
+    <h3>📊 Spending Summary</h3>
+    <ul>
+      {% for key, value in summary.items() %}
+        <li><b>{{ key }}</b>: ₹{{ value }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Patterns -->
+  <div class="card">
+    <h3>⚠️ Insights</h3>
+    <ul>
+      {% for p in patterns %}
+        <li>{{ p }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- AI Chat -->
+  <div class="card">
+    <h3>🤖 AI Financial Mentor</h3>
+
+    <form method="GET">
+      <input class="form-control mb-2" name="query" placeholder="Ask about savings, loan, investment...">
+      <button class="btn btn-primary">Ask AI</button>
+    </form>
+
+    {% if response %}
+      <div class="ai-box">
+        {{ response }}
+      </div>
+    {% endif %}
+  </div>
+
+</div>
