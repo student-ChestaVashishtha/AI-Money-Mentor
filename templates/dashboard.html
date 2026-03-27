@@ -88,18 +88,81 @@
 
             <div class="card">
                 <h3>Ask your Financial AI</h3>
+                
                 <form method="GET" style="display: flex; gap: 10px; margin-top: 1rem;">
                     <input type="text" name="query" class="form-control" placeholder="E.g., How can I reduce my food expenses?" required>
                     <button type="submit" class="btn" style="width: 120px;">Ask</button>
                 </form>
 
-                {% if response %}
-                <div class="ai-response">
-                    {{ response | safe }}
+                {% if chat_history %}
+                <form action="{{ url_for('clear_chat') }}" method="GET" style="margin-top: 10px; margin-bottom: 20px;">
+                    <button type="submit" style="background-color: #ef4444; color: white; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+                        🗑️ Clear Conversation
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if chat_history %}
+                <div class="chat-history-container" id="chat-box" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                    {% for msg in chat_history %}
+                        {% if msg.role == 'user' %}
+                            <div class="user-message" style="background-color: #e0f2fe; padding: 15px; border-radius: 12px; margin-bottom: 10px; text-align: right;">
+                                <strong>You:</strong> {{ msg.text }}
+                            </div>
+                        {% else %}
+                            <div class="ai-response" style="margin-bottom: 20px;">
+                                {{ msg.html | safe }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                 </div>
                 {% endif %}
             </div>
         </main>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. Auto-scroll to the bottom of the chat
+            var chatBox = document.getElementById("chat-box");
+            if (chatBox) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            // 2. Make "Recommended Questions" clickable
+            const headings = document.querySelectorAll('.ai-response h3');
+            headings.forEach(h3 => {
+                if (h3.innerText.includes('Recommended Questions')) {
+                    let nextElement = h3.nextElementSibling;
+                    
+                    // Find the bullet point list right after the heading
+                    if (nextElement && nextElement.tagName === 'UL') {
+                        let listItems = nextElement.querySelectorAll('li');
+                        
+                        listItems.forEach(li => {
+                            // Style it so the user knows it's clickable
+                            li.style.cursor = 'pointer';
+                            li.style.color = '#2563eb'; 
+                            li.style.textDecoration = 'underline';
+                            li.style.transition = 'color 0.2s';
+                            
+                            // Add hover effect
+                            li.onmouseover = function() { this.style.color = '#1e40af'; };
+                            li.onmouseout = function() { this.style.color = '#2563eb'; };
+
+                            // When clicked, put text in the input box!
+                            li.addEventListener('click', function() {
+                                const inputBox = document.querySelector('input[name="query"]');
+                                // Remove the bullet point text and trim spaces
+                                inputBox.value = this.innerText;
+                                inputBox.focus(); // Bring the cursor to the input box
+                            });
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>

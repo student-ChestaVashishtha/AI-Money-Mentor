@@ -5,9 +5,14 @@ import json
 from utils.analysis import analyze_data, detect_patterns
 from utils.chatbot import financial_chatbot
 import markdown
+from flask_session import Session
 
 app = Flask(__name__)
 app.secret_key = "super_secret_hackathon_key"
+
+# 2. Add these two lines to configure Server-Side Sessions
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True) # Ensure folder exists
@@ -79,31 +84,47 @@ def dashboard():
             
             df = pd.read_csv(path)
             summary = analyze_data(df)
-            patterns = detect_patterns(summary)
+            patterns = detect_patterns(df, summary) # Pass both the raw data and the summary!
 
             # Store in session so it persists during chat queries
             session["summary"] = summary
             session["patterns"] = patterns
 
+    # Ensure a chat history list exists for this user's session
+    if "chat_history" not in session:
+        session["chat_history"] = []
+
     query = request.args.get("query")
     if query:
-        # 1. Get the raw markdown string from the AI
-        raw_response = financial_chatbot(query, user, summary)
+        # Pass the session history to the chatbot
+        raw_response = financial_chatbot(query, user, summary, session["chat_history"])
+        html_response = markdown.markdown(raw_response)
+
+        # Append both the user's question and the AI's answer to the session
+        session["chat_history"].append({"role": "user", "text": query})
+        session["chat_history"].append({"role": "model", "text": raw_response, "html": html_response})
         
-        # 2. Convert the markdown string into HTML
-        response = markdown.markdown(raw_response)
+        # Tell Flask that we modified the list so it saves the cookie
+        session.modified = True
 
     return render_template(
         "dashboard.html",
         user=user,
         summary=summary,
         patterns=patterns,
-        response=response
+        # Pass the chat history instead of the single response
+        chat_history=session.get("chat_history", []) 
     )
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+@app.route("/clear_chat")
+def clear_chat():
+    # Only clear the chat history, keep the user logged in and keep their CSV data
+    session.pop("chat_history", None)
+    return redirect(url_for("dashboard"))
 
 if __name__ == "__main__":
     app.run(debug=True)
