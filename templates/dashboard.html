@@ -10,6 +10,10 @@
         .chat-box { background: #f9fafb; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; min-height: 100px; margin-top: 1rem; }
         .ai-message { color: var(--primary-color); font-weight: 500; margin-bottom: 0.5rem; }
         .upload-area { border: 2px dashed var(--border-color); padding: 2rem; text-align: center; border-radius: 8px; margin-bottom: 2rem;}
+        /* Clean formatting for AI Markdown */
+        .ai-response h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.1rem; color: #1e293b; }
+        .ai-response p { margin-bottom: 0.75rem; line-height: 1.5; }
+        .ai-response ul { margin-bottom: 1rem; padding-left: 1.5rem; }
     </style>
 </head>
 <body>
@@ -39,6 +43,20 @@
                 </form>
             </div>
 
+            {% if anomalies %}
+            <div class="card" style="margin-bottom: 2rem; border-left: 5px solid #ef4444; background-color: #fef2f2;">
+                <h3 style="color: #ef4444; margin-top: 0;">🚨 AI Security & Anomaly Alerts</h3>
+                <ul style="list-style-type: none; padding-left: 0; margin-top: 10px;">
+                    {% for alert in anomalies %}
+                        <li style="margin-bottom: 12px;">
+                            <strong>{{ alert.date }} - {{ alert.merchant }} (₹{{ alert.amount }}):</strong> 
+                            <span style="color: #475569;">{{ alert.reason }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
             {% if summary %}
             <div class="grid-cards" style="margin-bottom: 2rem;">
                 <div class="card">
@@ -50,7 +68,7 @@
                     <h3>AI Detected Patterns</h3>
                     <ul style="margin-top: 1rem; list-style-type: none; padding-left: 0;">
                         {% for p in patterns %}
-                            <li style="margin-bottom: 10px; padding: 10px; background: #fef2f2; border-radius: 6px; border-left: 4px solid #ef4444;">
+                            <li style="margin-bottom: 10px; padding: 10px; background: #f8fafc; border-radius: 6px; border-left: 4px solid #3b82f6;">
                                 {{ p }}
                             </li>
                         {% endfor %}
@@ -65,8 +83,6 @@
             <script>
                 document.addEventListener("DOMContentLoaded", function() {
                     const ctx = document.getElementById('spendingChart').getContext('2d');
-                    
-                    // Parse the data safely from the JSON script block
                     const rawData = document.getElementById('summary-data').textContent;
                     const summaryData = JSON.parse(rawData);
                     
@@ -76,11 +92,23 @@
                             labels: Object.keys(summaryData),
                             datasets: [{
                                 data: Object.values(summaryData),
-                                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'],
+                                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280', '#ec4899', '#14b8a6'],
                                 borderWidth: 0
                             }]
                         },
-                        options: { responsive: true, maintainAspectRatio: false }
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false,
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return ' ' + context.label + ': ' + context.raw + '%';
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     });
                 });
             </script>
@@ -89,7 +117,7 @@
             <div class="card">
                 <h3>Ask your Financial AI</h3>
                 
-                <form method="GET" style="display: flex; gap: 10px; margin-top: 1rem;">
+                <form id="chat-form" method="GET" style="display: flex; gap: 10px; margin-top: 1rem;">
                     <input type="text" name="query" class="form-control" placeholder="E.g., How can I reduce my food expenses?" required>
                     <button type="submit" class="btn" style="width: 120px;">Ask</button>
                 </form>
@@ -103,14 +131,14 @@
                 {% endif %}
 
                 {% if chat_history %}
-                <div class="chat-history-container" id="chat-box" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                <div class="chat-history-container" id="chat-box" style="max-height: 600px; overflow-y: auto; padding-right: 15px;">
                     {% for msg in chat_history %}
                         {% if msg.role == 'user' %}
-                            <div class="user-message" style="background-color: #e0f2fe; padding: 15px; border-radius: 12px; margin-bottom: 10px; text-align: right;">
+                            <div class="user-message" style="background-color: #e0f2fe; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: right; border-bottom-right-radius: 2px;">
                                 <strong>You:</strong> {{ msg.text }}
                             </div>
                         {% else %}
-                            <div class="ai-response" style="margin-bottom: 20px;">
+                            <div class="ai-response" style="background-color: #f1f5f9; padding: 20px; border-radius: 12px; margin-bottom: 25px; border-bottom-left-radius: 2px;">
                                 {{ msg.html | safe }}
                             </div>
                         {% endif %}
@@ -122,40 +150,79 @@
     </div>
 
     <script>
+        // ==========================================
+        // 1. THE MAIN PAGE SCROLL MEMORY HACK
+        // ==========================================
+        window.addEventListener("beforeunload", function() {
+            sessionStorage.setItem("scrollPosition", window.scrollY);
+        });
+
+        let scrollPos = sessionStorage.getItem("scrollPosition");
+        if (scrollPos !== null) {
+            window.scrollTo(0, parseInt(scrollPos));
+            sessionStorage.removeItem("scrollPosition"); 
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
-            // 1. Auto-scroll to the bottom of the chat
-            var chatBox = document.getElementById("chat-box");
+            // ==========================================
+            // 2. THE CHAT BOX AUTO-SCROLL FIX
+            // ==========================================
+            const chatBox = document.getElementById("chat-box");
             if (chatBox) {
-                chatBox.scrollTop = chatBox.scrollHeight;
+                // A tiny 100ms delay ensures the browser has fully drawn the AI's long text
+                // before it tries to calculate how far down to scroll.
+                setTimeout(() => {
+                    chatBox.scrollTo({
+                        top: chatBox.scrollHeight,
+                        behavior: 'smooth' // Adds a nice gliding animation!
+                    });
+                }, 100);
             }
 
-            // 2. Make "Recommended Questions" clickable
+            // ==========================================
+            // 3. CLICKABLE RECOMMENDED QUESTIONS
+            // ==========================================
             const headings = document.querySelectorAll('.ai-response h3');
             headings.forEach(h3 => {
                 if (h3.innerText.includes('Recommended Questions')) {
                     let nextElement = h3.nextElementSibling;
                     
-                    // Find the bullet point list right after the heading
                     if (nextElement && nextElement.tagName === 'UL') {
                         let listItems = nextElement.querySelectorAll('li');
                         
                         listItems.forEach(li => {
-                            // Style it so the user knows it's clickable
+                            // Styling
                             li.style.cursor = 'pointer';
                             li.style.color = '#2563eb'; 
-                            li.style.textDecoration = 'underline';
-                            li.style.transition = 'color 0.2s';
+                            li.style.padding = '8px';
+                            li.style.backgroundColor = '#ffffff';
+                            li.style.borderRadius = '5px';
+                            li.style.border = '1px solid #e2e8f0';
+                            li.style.marginBottom = '8px';
+                            li.style.transition = 'all 0.2s';
+                            li.style.listStyleType = 'none'; 
                             
                             // Add hover effect
-                            li.onmouseover = function() { this.style.color = '#1e40af'; };
-                            li.onmouseout = function() { this.style.color = '#2563eb'; };
+                            li.onmouseover = function() { 
+                                this.style.backgroundColor = '#f8fafc';
+                                this.style.borderColor = '#93c5fd';
+                            };
+                            li.onmouseout = function() { 
+                                this.style.backgroundColor = '#ffffff';
+                                this.style.borderColor = '#e2e8f0';
+                            };
 
-                            // When clicked, put text in the input box!
+                            // When clicked, put text in input and SUBMIT
                             li.addEventListener('click', function() {
                                 const inputBox = document.querySelector('input[name="query"]');
-                                // Remove the bullet point text and trim spaces
-                                inputBox.value = this.innerText;
-                                inputBox.focus(); // Bring the cursor to the input box
+                                const chatForm = document.getElementById('chat-form');
+                                
+                                let cleanText = this.innerText.replace(/^[\*\-\•]\s*/, '');
+                                inputBox.value = cleanText;
+                                
+                                if(chatForm) {
+                                    chatForm.submit();
+                                }
                             });
                         });
                     }

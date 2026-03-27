@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 import pandas as pd
 import os
 import json
+import re  # <--- MOVED TO THE VERY TOP
 from utils.analysis import analyze_data, detect_patterns
 from utils.chatbot import financial_chatbot
 import markdown
@@ -10,7 +11,7 @@ from flask_session import Session
 app = Flask(__name__)
 app.secret_key = "super_secret_hackathon_key"
 
-# 2. Add these two lines to configure Server-Side Sessions
+# Configure Server-Side Sessions
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
@@ -63,48 +64,103 @@ def dashboard():
     
     user = users.get(session["user"])
 
-    # 2. CRITICAL FIX: Check if the user actually exists in the database/dictionary
-    # If the server restarted and wiped the dictionary, clear their dead session cookie.
+    # 2. Check if the user actually exists
     if user is None:
         session.clear()
         flash("Session expired. Please register or log in again.", "error")
         return redirect(url_for("register"))
 
-    response = None
+    # Initialize custom_rules if it doesn't exist
+    if "custom_rules" not in session:
+        session["custom_rules"] = {}
 
-    # Retrieve existing data from session if it exists
+    # Ensure a chat history list exists
+    if "chat_history" not in session:
+        session["chat_history"] = []
+
     summary = session.get("summary", {})
     patterns = session.get("patterns", [])
 
+    # ==========================================
+    # FILE UPLOAD & AUTO-ANALYSIS TRIGGER
+    # ==========================================
     if request.method == "POST":
         file = request.files.get("file")
         if file and file.filename.endswith('.csv'):
             path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
             file.save(path)
             
+            session["current_file"] = file.filename
+            
             df = pd.read_csv(path)
-            summary = analyze_data(df)
-            patterns = detect_patterns(df, summary) # Pass both the raw data and the summary!
+            
+            # Run the Python Math
+            summary = analyze_data(df, session["custom_rules"])
+            patterns = detect_patterns(df, summary, session["custom_rules"]) 
 
-            # Store in session so it persists during chat queries
             session["summary"] = summary
             session["patterns"] = patterns
 
-    # Ensure a chat history list exists for this user's session
-    if "chat_history" not in session:
-        session["chat_history"] = []
+            # Clear old chat history so the new file gets a fresh analysis
+            session["chat_history"] = []
+            
+           # Force the AI to write the deep analysis report immediately
+            auto_query = "I just uploaded my bank statement. Please provide a deep, personalized financial analysis of my recent statement based on the exact math and patterns."
+            
+            # Convert DataFrame to a string so Gemini can read the rows!
+            csv_string = df.to_csv(index=False)
+            
+            # Add csv_string to the end!
+            raw_response = financial_chatbot(auto_query, user, summary, patterns, session["chat_history"], csv_string)
+            
+            
+            # Erase any hidden tags just in case
+            raw_response = re.sub(r'\[UPDATE_CATEGORY.*?\]', '', raw_response)
+            
+            html_response = markdown.markdown(raw_response.strip())
+            
+            # Append the AI's deep analysis as the first message!
+            session["chat_history"].append({"role": "model", "text": raw_response.strip(), "html": html_response})
+            session.modified = True
 
+    # ==========================================
+    # NORMAL CHAT PROCESSING
+    # ==========================================
     query = request.args.get("query")
     if query:
-        # Pass the session history to the chatbot
-        raw_response = financial_chatbot(query, user, summary, session["chat_history"])
-        html_response = markdown.markdown(raw_response)
+        # We need the dataframe to pass the raw data
+        csv_string = ""
+        if "current_file" in session:
+            path = os.path.join(app.config["UPLOAD_FOLDER"], session["current_file"])
+            if os.path.exists(path):
+                temp_df = pd.read_csv(path)
+                csv_string = temp_df.to_csv(index=False)
 
-        # Append both the user's question and the AI's answer to the session
-        session["chat_history"].append({"role": "user", "text": query})
-        session["chat_history"].append({"role": "model", "text": raw_response, "html": html_response})
+        # Add csv_string to the end!
+        raw_response = financial_chatbot(query, user, summary, patterns, session["chat_history"], csv_string)
         
-        # Tell Flask that we modified the list so it saves the cookie
+        # Secret Tag Interceptor
+        match = re.search(r'\[UPDATE_CATEGORY:\s*(.+?)\s*->\s*(.+?)\]', raw_response)
+        if match:
+            old_name = match.group(1).strip()
+            new_name = match.group(2).strip()
+            session["custom_rules"][old_name] = new_name
+            session.modified = True
+            raw_response = raw_response.replace(match.group(0), "")
+            
+            if "current_file" in session:
+                path = os.path.join(app.config["UPLOAD_FOLDER"], session["current_file"])
+                if os.path.exists(path):
+                    df = pd.read_csv(path)
+                    summary = analyze_data(df, session["custom_rules"])
+                    patterns = detect_patterns(df, summary, session["custom_rules"])
+                    session["summary"] = summary
+                    session["patterns"] = patterns
+
+        html_response = markdown.markdown(raw_response.strip())
+
+        session["chat_history"].append({"role": "user", "text": query})
+        session["chat_history"].append({"role": "model", "text": raw_response.strip(), "html": html_response})
         session.modified = True
 
     return render_template(
@@ -112,9 +168,9 @@ def dashboard():
         user=user,
         summary=summary,
         patterns=patterns,
-        # Pass the chat history instead of the single response
         chat_history=session.get("chat_history", []) 
     )
+
 @app.route("/logout")
 def logout():
     session.clear()
@@ -122,7 +178,6 @@ def logout():
 
 @app.route("/clear_chat")
 def clear_chat():
-    # Only clear the chat history, keep the user logged in and keep their CSV data
     session.pop("chat_history", None)
     return redirect(url_for("dashboard"))
 

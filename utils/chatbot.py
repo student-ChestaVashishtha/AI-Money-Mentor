@@ -1,71 +1,77 @@
 from google import genai
-from google.genai import types # We need this for formatting the history
+from google.genai import types 
 import os
 
-# Initialize the client. 
-# NOTE: It's best practice to remove the hardcoded API key and use environment variables.
-# If you set an environment variable named GEMINI_API_KEY, you can just use `client = genai.Client()`
 client = genai.Client(api_key=os.getenv("API_KEY"))
 
-def financial_chatbot(query, user, summary, chat_history):
+def financial_chatbot(query, user, summary, patterns, chat_history, csv_data=""):
     try:
-        prompt = f"""
-        You are an empathetic but highly practical financial advisor.
+        behavioral_insights = "\n".join(patterns) if patterns else "No specific patterns detected yet."
 
-        User Context:
+        prompt = f"""
+        You are an elite, highly empathetic Financial Advisor.
+
+        User Profile:
         Name: {user['name']}
         Age: {user['age']}
-        Salary: ₹{user['salary']} per month
+        Stated Monthly Salary: ₹{user['salary']} per month
         Profession: {user['profession']}
         Investment Interest: {user['investment']}
 
-        Spending Data (Monthly):
+        --- VERIFIED FINANCIAL TOTALS ---
+        Category Breakdown (Percentages):
         {summary}
 
-        CRITICAL RULES & FORMATTING:
-        1. STRICT CURRENCY: You MUST use the Indian Rupee symbol (₹) for all monetary amounts. NEVER use dollars ($).
-        2. STRICT TIMEFRAME: The user's salary and all spending data provided are STRICTLY MONTHLY figures. 
-        3. STRICT TEMPLATE: You MUST format your response using the exact Markdown template below. Keep paragraphs short.
-        4. STRICT TEMPLATE: You MUST format your response using the exact Markdown template below.
-        5. CATEGORY UPDATES: If the user explicitly asks to categorize a merchant into a new or specific category (e.g., "Yes, put Jio in Bills" or "Make a new category for Amazon called Shopping"), you MUST include a secret tag at the very end of your response in this exact format:
-        [UPDATE_CATEGORY: MerchantName -> NewCategoryName]
-        Example: [UPDATE_CATEGORY: Jio -> Monthly Bills]
-        ### The Short Answer
-        [Give a direct, 1-2 sentence answer]
+        Behavioral & Mathematical Insights (CRITICAL):
+        {behavioral_insights}
 
-        ### The Reality Check
-        [Explain the financial reasoning based purely on their provided monthly ₹ data.]
+        --- RAW TRANSACTION HISTORY ---
+        (Use this to answer specific questions about individual purchases)
+        {csv_data}
 
-        ### Next Steps
-        * [Actionable step 1]
-        * [Actionable step 2]
-        * [Actionable step 3]
+        CRITICAL RULES FOR AI:
+        1. DO NOT RECALCULATE TOTALS: You must trust the "EXACT MATH" provided in the insights for total income/expenses. 
+        2. USE RAW DATA FOR SPECIFICS: If the user asks about specific transactions, search the RAW TRANSACTION HISTORY to give exact, accurate answers.
+        3. STRICT CURRENCY: You MUST use the Indian Rupee symbol (₹).
+        4. CATEGORY UPDATES: If the user explicitly asks to categorize a merchant, include this secret tag at the end: [UPDATE_CATEGORY: OldName -> NewCategory]
 
-        ### Recommended Questions
-        * [Follow up question 1]
-        * [Follow up question 2]
-        * [Follow up question 3]
+        FORMATTING RULES:
+        - IF the user asks for a general analysis, review, or "how am I doing", you MUST use this strict template:
+            ### 📊 The Reality Check
+            [Summary based on EXACT MATH]
+            ### 🔍 Where Your Money is Going
+            [Analysis of categories]
+            ### 🎯 Your Action Plan
+            * [Step 1]
+            * [Step 2]
+        - IF the user asks a specific question, DO NOT use the template. Just answer their specific question directly.
+        
+        UNIVERSAL ENDING RULE (MANDATORY):
+        No matter what the user asks, you MUST end EVERY SINGLE RESPONSE with exactly 3 highly relevant follow-up questions based on their data. 
+        You MUST format it exactly like this:
+        
+        ### ❓ Recommended Questions
+        * [Question 1]
+        * [Question 2]
+        * [Question 3]
         """
 
-        # 2. Rebuild the conversation history for Gemini
         formatted_contents = []
         for msg in chat_history:
             formatted_contents.append(
                 types.Content(role=msg["role"], parts=[types.Part.from_text(text=msg["text"])])
             )
         
-        # 3. Add the brand new question from the user
         formatted_contents.append(
             types.Content(role="user", parts=[types.Part.from_text(text=query)])
         )
 
-        # 4. Generate the response using the history and the system instructions
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=formatted_contents,
             config=types.GenerateContentConfig(
                 system_instruction=prompt,
-                temperature=0.7 # Makes the AI slightly more conversational
+                temperature=0.4 
             )
         )
 
