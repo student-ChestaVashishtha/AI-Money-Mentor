@@ -1,216 +1,238 @@
-Perfect — I’ll write you a **hackathon-winning README** (this is what judges & recruiters actually read 🔥).
+## 🧠 FinSaarthi AI — Intelligent Financial Decision Engine
 
-I’ve taken inspiration from strong AI-fintech projects where the focus is:
-
-* **Problem → Impact → AI innovation → Demo clarity** ([Devpost - The home for hackathons][1])
-
----
-
-# 🚀 COPY THIS FULL README (JUST PASTE IN YOUR REPO)
-
----
-
-## 🧠 FinSaarthi AI — Your Personal Financial Mentor
-
-> **“An AI financial advisor that understands your life, not just your transactions.”**
+> **“Not a chatbot. A system that analyzes your financial behavior and tells you exactly what to do.”**
 
 ---
 
 ## 📌 Problem Statement
 
-India has **14+ crore demat accounts**, yet most retail investors:
+India has **14+ crore demat accounts**, but most retail investors:
 
-* Rely on random tips
-* Ignore financial patterns
-* Don’t understand their own spending
-* Lack personalized financial guidance
+* React emotionally instead of logically
+* Don’t understand their spending patterns
+* Miss critical financial signals
+* Lack personalized financial planning
 
-Financial data exists — but **intelligence doesn’t**.
+👉 Data exists.
+❌ Decision-making intelligence does NOT.
 
 ---
 
-## 💡 Our Solution
+## 💡 Solution
 
-**FinSaarthi AI** is a **context-aware financial advisor** that:
+**FinSaarthi AI** is a **data-driven financial decision engine** that:
 
-* Understands user lifestyle
-* Analyzes financial statements
+* Analyzes real financial statements
 * Detects behavioral patterns
-* Uses AI to generate **personalized financial advice**
+* Classifies users into financial scenarios
+* Generates **strict, actionable financial advice using AI**
 
 ---
 
-## 🔥 Key Features
+## 🔥 Core Innovation
 
-### 🧾 1. Smart User Profiling
+Unlike typical finance apps:
 
-* Income, profession, lifestyle inputs
-* Investment mindset detection
-* Life-stage understanding (student / working / married)
+❌ Not just tracking
+❌ Not just chatbot
 
----
-
-### 📊 2. Financial Statement Intelligence
-
-* Upload CSV bank statements
-* Auto-categorization (Food, Shopping, Rent, etc.)
-* Handles messy UPI + real-world data
+✅ **Scenario-based financial reasoning system**
 
 ---
 
-### ⚠️ 3. Behavioral Pattern Detection
+## 🧠 Intelligent Scenario Engine
 
-* Overspending alerts
-* Frequent shopping detection
-* High cash usage insights
+The system automatically classifies users into:
+
+* 🔴 **BURNER** → Spending > Income
+* 🟢 **SAVER** → Positive savings
+* 🟡 **UNTRACKED_SPENDING** → High cash / unknown usage
+
+👉 This becomes the **source of truth for AI decisions**
 
 ---
 
-### 🤖 4. AI Financial Mentor
+## ⚙️ How It Works
 
-* Context-aware chatbot
-* Uses:
+```text
+User Profile + CSV Upload
+        ↓
+Transaction Categorization (Pandas)
+        ↓
+Behavioral Pattern Detection
+        ↓
+Scenario Detection Engine
+        ↓
+Context Injection into AI
+        ↓
+AI Financial Decision Engine
+        ↓
+Strict, Quantified Advice
+```
+
+---
+
+## 📊 Features
+
+### 🧾 Financial Statement Intelligence
+
+* Upload real bank CSV
+* Auto categorization (UPI, shopping, rent, etc.)
+* Handles messy real-world data
+
+---
+
+### ⚠️ Behavioral Pattern Detection
+
+* Overspending detection
+* Cash leakage identification
+* Habit-based financial insights
+
+---
+
+### 🧠 Scenario-Based Decision Engine
+
+* Converts raw data → financial persona
+* Drives AI decision-making logic
+
+---
+
+### 🤖 AI Financial Mentor (NOT a chatbot)
+
+* Context-aware AI using:
 
   * User profile
-  * Spending behavior
-  * Financial principles
+  * Spending patterns
+  * Scenario classification
+  * Raw transaction data
 
-👉 Gives:
+👉 Produces:
 
-* Loan advice
-* Investment guidance
-* Saving strategies
+* Financial diagnosis
+* Cost leakage analysis
+* Step-by-step action plan
+* Future projections
 
 ---
 
-### 🎯 5. Goal-Based Financial Planning
+### 🎯 Goal-Based Financial Planning
 
 Supports:
 
-* 💍 Marriage planning
-* 🏠 Home loan decisions
-* 🚀 Business planning
-* 👶 Child future planning
-* 🧓 Retirement planning
+💍 Marriage planning
+🏠 Home loan decisions
+🚀 Business planning
+👶 Child future planning
+🧓 Retirement planning
 
 ---
 
-## 🧠 AI Innovation (THIS WINS HACKATHONS)
+### 📈 Structured AI Output
 
-Unlike normal chatbots:
+Every response includes:
 
-✅ Uses **multi-layer context injection**
-✅ Combines **structured + unstructured data**
-✅ Handles **uncertainty (cash transactions)**
-✅ Provides **real-world practical advice**
+* 🧠 Financial Health Summary
+* 🩺 Diagnosis
+* 💸 Cost Leakage
+* 🗺️ Action Plan
+* 📈 Financial Impact
+* 🔮 Future Projection
 
-👉 Inspired by modern financial AI systems that focus on **personalized, conversational decision-making** ([arXiv][2])
+---
+
+## 🔥 Example AI Output
+
+> “You are currently a **BURNER**. Your expenses exceed income by ₹8,000/month.
+> Cut shopping by ₹3,000 and food delivery by ₹2,000 to stabilize your finances within 2 months.”
 
 ---
 
 ## ⚙️ Tech Stack
 
-| Layer    | Technology             |
-| -------- | ---------------------- |
-| Backend  | Flask                  |
-| AI       | OpenAI / Gemini        |
-| Data     | Pandas                 |
-| Frontend | HTML + CSS + Bootstrap |
-| Storage  | Session-based          |
+| Layer           | Tech                   |
+| --------------- | ---------------------- |
+| Backend         | Flask                  |
+| AI Engine       | Gemini API             |
+| Data Processing | Pandas                 |
+| Session Memory  | Flask-Session          |
+| Frontend        | HTML + CSS + Bootstrap |
 
 ---
 
-## 🚀 How It Works
+## 📂 Project Structure
 
-```text
-User Input (Profile + Goals)
-        ↓
-Upload Financial Statement
-        ↓
-Transaction Categorization
-        ↓
-Pattern Detection Engine
-        ↓
-AI Context Builder
-        ↓
-AI Financial Mentor
-        ↓
-Personalized Advice
+```bash
+AI-Money-Mentor/
+│
+├── app.py
+├── utils/
+│   ├── analysis.py
+│   ├── chatbot.py
+│
+├── templates/
+├── static/
+├── uploads/
 ```
 
 ---
 
-## 📸 Demo
-
-👉 Add screenshots here (VERY IMPORTANT)
-
-Example:
-
-* Login Page
-* Dashboard
-* AI Chat Response
-* Insights Section
-
----
-
-## 🎯 Real-World Impact
-
-* Makes financial planning accessible to everyone
-* Helps users move from **guesswork → data-driven decisions**
-* Handles real-world Indian problems like:
-
-  * Cash transactions
-  * Unstructured spending
-  * Behavioral bias
-
----
-
-## 🔥 Why This Project Stands Out
-
-* Not just analysis → **decision-making system**
-* Not just chatbot → **context-aware AI advisor**
-* Combines:
-
-  * Data science
-  * Behavioral finance
-  * AI reasoning
-
----
-
-## ⚠️ Limitations
-
-* Cash spending is estimated
-* Depends on input quality
-* Not a replacement for certified financial advisors
-
----
-
-## 🚀 Future Scope
-
-* 🔗 Bank API integration
-* 📊 Portfolio tracking
-* 📈 Stock & mutual fund recommendations
-* 🧠 Multi-agent AI system
-* 📱 Mobile app
-
----
-
-## 🛠️ Setup Instructions
+## 🚀 Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/FinSaarthi-AI.git
-cd FinSaarthi-AI
+git clone https://github.com/student-ChestaVashishtha/AI-Money-Mentor.git
+cd AI-Money-Mentor
 
 pip install -r requirements.txt
+
+set GEMINI_API_KEY=your_api_key  # Windows
+export GEMINI_API_KEY=your_api_key  # Mac/Linux
 
 python app.py
 ```
 
 ---
 
+## 📸 Demo
+
+👉 Add screenshots here:
+
+* Dashboard
+* Insights
+* AI Response
+* Upload Flow
+
+---
+
+## 🎯 Why This Project Wins
+
+* ✅ Real-world financial complexity handled
+* ✅ Behavioral finance + AI combined
+* ✅ Scenario-driven decision system
+* ✅ Not generic AI — **structured reasoning engine**
+
+---
+
+## ⚠️ Limitations
+
+* Cash transactions are estimated
+* Depends on CSV format
+* Not a licensed financial advisor
+
+---
+
+## 🚀 Future Scope
+
+* 🔗 Bank API integration (Plaid / ONDC / UPI)
+* 📊 Portfolio tracking
+* 🧠 Multi-agent financial system
+* 📱 Mobile app
+* 📈 Investment recommendation engine
+
+---
+
 ## 🎤 Hackathon Pitch Line
 
-> “We are not building another finance app — we are building an AI that thinks like your personal financial advisor.”
+> “We built an AI that doesn’t just analyze your money — it tells you exactly how to fix your financial life.”
 
 ---
 
@@ -218,4 +240,6 @@ python app.py
 
 **Chesta Vashishtha**
 B.Tech (3rd Year)
+
+---
 
