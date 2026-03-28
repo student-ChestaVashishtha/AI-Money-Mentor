@@ -2,199 +2,188 @@ import pandas as pd
 import re
 
 # ==========================================
-# 1. FAST REGEX CATEGORIZATION (Replaces AI)
-# ==========================================
-# ==========================================
-# 1. FAST REGEX CATEGORIZATION (Upgraded for India)
+# 1. SMART CATEGORY DETECTION
 # ==========================================
 def categorize_transaction(desc):
-    """Instantly categorizes transactions using broad Indian keywords."""
     desc = str(desc).lower()
-    
-    # FOOD & GROCERY
-    if re.search(r'zomato|swiggy|blinkit|zepto|instamart|pizza|food|restaurant|cafe|dairy|bakery|grocery|mart|supermarket|ration', desc): 
+
+    if re.search(r'zomato|swiggy|blinkit|zepto|instamart|restaurant|cafe|food|grocery|mart', desc):
         return 'Food & Dining'
-        
-    # SHOPPING
-    if re.search(r'amazon|flipkart|myntra|meesho|ajio|shopping|sneakers|clothes|apparel|store|mall', desc): 
+
+    if re.search(r'amazon|flipkart|myntra|meesho|ajio|shopping|mall|store', desc):
         return 'Shopping'
-        
-    # TRANSPORT
-    if re.search(r'uber|ola|rapido|irctc|train|commute|auto|petrol|fuel|hpcl|bpcl|indian oil|toll|fastag', desc): 
+
+    if re.search(r'uber|ola|rapido|irctc|train|fuel|petrol|toll|fastag', desc):
         return 'Transport'
-        
-    # HOUSING & UTILITIES (Added 'elec', 'power', broadband)
-    if re.search(r'rent|electricity|elec|power|water|gas|wifi|broadband|jio|airtel|vi|bsnl|recharge|bill|uppcl|bescom', desc): 
+
+    if re.search(r'rent|electricity|power|water|gas|wifi|broadband|jio|airtel|bsnl|recharge', desc):
         return 'Housing & Utilities'
-        
-    # EDUCATION (Added 'univ', 'college', 'fee')
-    if re.search(r'school|univ|college|institute|physicswallah|unacademy|byju|academy|exam|tuition|nta|fee', desc): 
+
+    if re.search(r'school|college|univ|fee|exam|tuition|academy', desc):
         return 'Education'
-        
-    # CASH
-    if re.search(r'atm|cash|wdl|withdrawal', desc): 
+
+    if re.search(r'atm|cash|withdrawal|wdl', desc):
         return 'Cash Withdrawal'
-        
-    # ENTERTAINMENT
-    if re.search(r'netflix|spotify|prime|hotstar|movie|cinema|pvr|bookmyshow', desc): 
+
+    if re.search(r'netflix|spotify|prime|hotstar|movie|pvr', desc):
         return 'Entertainment'
-        
-    # HEALTHCARE
-    if re.search(r'med|hospital|clinic|pharmacy|doctor|apollo|pharma', desc): 
+
+    if re.search(r'hospital|clinic|pharmacy|doctor|apollo', desc):
         return 'Healthcare'
-        
-    # GENERIC UPI (If it doesn't match anything above, it falls here)
-    if re.search(r'upi/|gpay|paytm|phonepe|bharatpe|cred', desc): 
+
+    if re.search(r'upi|gpay|paytm|phonepe|cred', desc):
         return 'UPI Transfers'
-    
+
     return 'Miscellaneous'
 
+
 def extract_merchant_name(desc):
-    """Extracts specific merchant names for tracking habits."""
     desc = str(desc).lower()
-    upi_match = re.search(r'upi/([^@/]+)', desc)
-    if upi_match:
-        merchant = upi_match.group(1).strip()
-        merchant = merchant.replace('pv', '').replace('servi', '').replace('retail', '').replace('direct', '')
-        if merchant.isdigit(): return "Personal Transfer"
-        if len(merchant) > 2: return merchant.capitalize()
+    match = re.search(r'upi/([^@/]+)', desc)
+    if match:
+        merchant = match.group(1).strip()
+        if merchant.isdigit():
+            return "Personal Transfer"
+        return merchant.capitalize()
     return "Miscellaneous"
 
 
 # ==========================================
-# 2. HELPER: 3-MONTH FILTER
+# 2. FILTER LAST 3 MONTHS
 # ==========================================
 def filter_last_3_months(df):
-    """Filters the dataframe to ONLY include the 3 most recent months."""
     if 'Date' in df.columns:
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce', dayfirst=True)
-        df_clean = df.dropna(subset=['Date']).copy()
-        
-        if not df_clean.empty:
-            df_clean['Month_Key'] = df_clean['Date'].dt.strftime('%Y-%m')
-            recent_months = sorted(df_clean['Month_Key'].unique())[-3:]
-            return df_clean[df_clean['Month_Key'].isin(recent_months)].copy()
-            
+        df = df.dropna(subset=['Date'])
+
+        df['Month_Key'] = df['Date'].dt.strftime('%Y-%m')
+        recent_months = sorted(df['Month_Key'].unique())[-3:]
+        return df[df['Month_Key'].isin(recent_months)].copy()
+
     return df.copy()
 
 
 # ==========================================
-# 3. DATA ANALYSIS (Builds Percentage Chart)
+# 3. MAIN ANALYSIS
 # ==========================================
-def analyze_data(df, custom_rules=None):
-    if custom_rules is None: custom_rules = {}
-
+def analyze_data(df):
     df.columns = df.columns.str.strip()
-    df_clean = filter_last_3_months(df)
+    df = filter_last_3_months(df)
 
-    if df_clean['Amount'].dtype == object:
-        df_clean['Amount'] = df_clean['Amount'].astype(str).str.replace(r'[^\d.-]', '', regex=True)
-    df_clean['Amount'] = pd.to_numeric(df_clean['Amount'], errors='coerce').fillna(0)
+    df['Amount'] = pd.to_numeric(
+        df['Amount'].astype(str).str.replace(r'[^\d.-]', '', regex=True),
+        errors='coerce'
+    ).fillna(0)
 
-    # Strictly grab Debits for the expense chart
-    if 'Type' in df_clean.columns:
-        expenses = df_clean[df_clean['Type'].astype(str).str.lower().str.strip() == 'debit'].copy()
+    if 'Type' in df.columns:
+        expenses = df[df['Type'].str.lower() == 'debit'].copy()
     else:
-        expenses = df_clean[df_clean['Amount'] < 0].copy()
+        expenses = df[df['Amount'] < 0].copy()
         expenses['Amount'] = expenses['Amount'].abs()
 
-    # Apply fast Regex Categories
-    def apply_category(desc):
-        desc_str = str(desc)
-        # Check if user made a custom rule first
-        for original_merchant, new_category in custom_rules.items():
-            if original_merchant.lower() in desc_str.lower(): return new_category
-        # Otherwise, use the fast regex
-        return categorize_transaction(desc_str)
+    expenses['Category'] = expenses['Description'].apply(categorize_transaction)
 
-    expenses['Dynamic_Category'] = expenses['Description'].apply(apply_category)
-    summary_df = expenses.groupby('Dynamic_Category')['Amount'].sum().reset_index()
-    
-    # Calculate PERCENTAGES for the chart
-    total_expense = summary_df['Amount'].sum()
+    summary = expenses.groupby('Category')['Amount'].sum()
+    total = summary.sum()
+
     percentage_summary = {}
-    
-    if total_expense > 0:
-        for index, row in summary_df.iterrows():
-            if row['Amount'] > 0:
-                pct = round((row['Amount'] / total_expense) * 100, 1)
-                percentage_summary[row['Dynamic_Category']] = pct
-                
-    return dict(sorted(percentage_summary.items(), key=lambda item: item[1], reverse=True))
+    if total > 0:
+        for k, v in summary.items():
+            percentage_summary[k] = round((v / total) * 100, 1)
+
+    return dict(sorted(percentage_summary.items(), key=lambda x: x[1], reverse=True))
 
 
 # ==========================================
-# 4. BEHAVIORAL PATTERN DETECTOR (MATH & INSIGHTS)
+# 4. ADVANCED PATTERN DETECTION
 # ==========================================
-def detect_patterns(df, summary, custom_rules=None):
+def detect_patterns(df, summary):
     patterns = []
+
     df.columns = df.columns.str.strip()
-    df_clean = filter_last_3_months(df)
+    df = filter_last_3_months(df)
 
-    if df_clean['Amount'].dtype == object:
-        df_clean['Amount'] = df_clean['Amount'].astype(str).str.replace(r'[^\d.-]', '', regex=True)
-    df_clean['Amount'] = pd.to_numeric(df_clean['Amount'], errors='coerce').fillna(0)
+    df['Amount'] = pd.to_numeric(
+        df['Amount'].astype(str).str.replace(r'[^\d.-]', '', regex=True),
+        errors='coerce'
+    ).fillna(0)
 
-    # 1. Scope Tracking
-    if 'Date' in df_clean.columns:
-        df_clean['MonthYear'] = df_clean['Date'].dt.strftime('%b %Y')
-        unique_months = df_clean['MonthYear'].dropna().unique()
-        num_months = len(unique_months)
-        if num_months > 0:
-            patterns.append(f"📅 Statement Scope: Focused analysis on your {num_months} most recent month(s) ({', '.join(unique_months)}).")
+    if 'Type' in df.columns:
+        expenses = df[df['Type'].str.lower() == 'debit'].copy()
+        income = df[df['Type'].str.lower() == 'credit'].copy()
     else:
-        unique_months = []
-        num_months = 1
-
-    # 2. Separate Income (Credit) and Expenses (Debit)
-    if 'Type' in df_clean.columns:
-        df_clean['Norm_Type'] = df_clean['Type'].astype(str).str.lower().str.strip()
-        expenses = df_clean[df_clean['Norm_Type'] == 'debit'].copy()
-        income = df_clean[df_clean['Norm_Type'] == 'credit'].copy()
-    else:
-        expenses = df_clean[df_clean['Amount'] < 0].copy()
+        expenses = df[df['Amount'] < 0].copy()
         expenses['Amount'] = expenses['Amount'].abs()
-        income = df_clean[df_clean['Amount'] > 0].copy()
+        income = df[df['Amount'] > 0].copy()
 
-    # 3. EXACT MATH CALCULATION
+    # =========================
+    # CORE FINANCIAL MATH
+    # =========================
     total_income = income['Amount'].sum()
     total_expense = expenses['Amount'].sum()
-    net_savings = total_income - total_expense
-    
-    patterns.append(f"📊 EXACT MATH: Total 3-Month Income = ₹{total_income:,.0f} | Total 3-Month Expense = ₹{total_expense:,.0f} | Net Savings = ₹{net_savings:,.0f}.")
-    
-    if net_savings < 0:
-        patterns.append(f"🚨 Severe Deficit: You spent ₹{abs(net_savings):,.0f} more than you earned over this period.")
-    else:
-        patterns.append(f"🌟 Positive Cashflow: You successfully saved ₹{net_savings:,.0f} over this period.")
+    net = total_income - total_expense
 
-    # 4. Check for deficits per month
-    deficit_months = []
-    if len(unique_months) > 0 and 'MonthYear' in df_clean.columns:
-        for month in unique_months:
-            month_exp = expenses[expenses['MonthYear'] == month]['Amount'].sum()
-            month_inc = income[income['MonthYear'] == month]['Amount'].sum()
-            if month_exp > month_inc and month_exp > 0:
-                deficit_months.append(month)
-        if deficit_months:
-            patterns.append(f"⚠️ Month-to-Month Alert: You exceeded your income specifically in: {', '.join(deficit_months)}.")
+    patterns.append(
+        f"📊 EXACT MATH: Income ₹{total_income:,.0f} | Expense ₹{total_expense:,.0f} | Net ₹{net:,.0f}"
+    )
 
-    # 5. Simple Merchant Tracking
+    # =========================
+    # SAVINGS RATE
+    # =========================
+    if total_income > 0:
+        savings_rate = (net / total_income) * 100
+
+        if savings_rate < 10:
+            patterns.append(f"⚠️ Low savings rate: {savings_rate:.1f}%")
+        elif savings_rate > 30:
+            patterns.append(f"🌟 Excellent savings rate: {savings_rate:.1f}%")
+
+    # =========================
+    # COST LEAKAGE DETECTION
+    # =========================
+    for cat, pct in summary.items():
+        if pct > 40:
+            patterns.append(f"💸 Cost Leakage: {cat} is {pct}% of your expenses")
+
+    # =========================
+    # 50-30-20 RULE CHECK
+    # =========================
+    needs = summary.get('Housing & Utilities', 0)
+    wants = summary.get('Food & Dining', 0) + summary.get('Entertainment', 0)
+
+    if needs > 50:
+        patterns.append("⚠️ Needs exceed 50% (financial stress risk)")
+
+    if wants > 30:
+        patterns.append("⚠️ Wants exceed 30% (lifestyle inflation)")
+
+    # =========================
+    # ANOMALY DETECTION
+    # =========================
+    avg = expenses['Amount'].mean()
+    for amt in expenses['Amount']:
+        if amt > 3 * avg:
+            patterns.append(f"🚨 Unusual high expense detected: ₹{amt:,.0f}")
+
+    # =========================
+    # TOP CATEGORY
+    # =========================
+    if summary:
+        top_cat = max(summary, key=summary.get)
+        patterns.append(f"🔎 Highest spending category: {top_cat} ({summary[top_cat]}%)")
+
+    # =========================
+    # MERCHANT HABITS
+    # =========================
     expenses['Merchant'] = expenses['Description'].apply(extract_merchant_name)
-    merchant_stats = expenses.groupby('Merchant').agg(
-        count=('Amount', 'size'),
-        total_amount=('Amount', 'sum')
-    ).reset_index()
-    
-    for index, stats in merchant_stats.iterrows():
-        merchant = stats['Merchant']
-        total = stats['total_amount']
-        count = stats['count']
-        
-        if merchant in ["Cash Withdrawal", "Personal Transfer", "Miscellaneous"]: 
-            continue
-            
-        if count >= 3 and total > 1000:
-            patterns.append(f"🔁 Habit Detected: You transferred money to '{merchant}' {count} times (Total: ₹{total:,.0f}).")
+
+    merchant_stats = expenses.groupby('Merchant')['Amount'].agg(['count', 'sum'])
+
+    for merchant, row in merchant_stats.iterrows():
+        if merchant not in ["Miscellaneous", "Personal Transfer"]:
+            if row['count'] >= 3 and row['sum'] > 1000:
+                patterns.append(
+                    f"🔁 Habit: {merchant} used {row['count']} times (₹{row['sum']:,.0f})"
+                )
 
     return patterns

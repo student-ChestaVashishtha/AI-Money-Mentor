@@ -1,63 +1,146 @@
 from google import genai
 from google.genai import types 
 import os
+import re
+
+def detect_scenario(user, summary, patterns):
+    scenario = []
+
+    # Extract net savings from patterns
+    net_savings = 0
+    for p in patterns:
+        if "Net" in p:
+            match = re.search(r'Net ₹(-?\d+)', p.replace(',', ''))
+            if match:
+                net_savings = int(match.group(1))
+
+    # Scenario B: Burner
+    if net_savings < 0:
+        scenario.append("BURNER")
+
+    # Scenario C: Saver
+    if net_savings > 0:
+        scenario.append("SAVER")
+
+    # Scenario A: Cash leakage / poor tracking
+    if summary.get("Cash Withdrawal", 0) > 30 or summary.get("Miscellaneous", 0) > 30:
+        scenario.append("UNTRACKED_SPENDING")
+
+    return scenario
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-def financial_chatbot(query, user, summary, patterns, chat_history, csv_data=""):
+def financial_chatbot(query, user, summary, patterns, chat_history, csv_data,scenario):
     try:
         behavioral_insights = "\n".join(patterns) if patterns else "No specific patterns detected yet."
 
         prompt = f"""
-        You are an elite, highly empathetic Financial Advisor and Wealth Strategist.
+        You are NOT a chatbot.
+        You are an AI Financial Decision Engine designed to take data-driven financial decisions for Indian users.
 
-        User Profile:
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        👤 USER PROFILE
+        ━━━━━━━━━━━━━━━━━━━━━━━
         Name: {user['name']}
         Age: {user['age']}
-        Stated Monthly Salary: ₹{user['salary']} per month
         Profession: {user['profession']}
-        Investment Interest: {user['investment']}
+        Monthly Salary: ₹{user['salary']}
+        Investment Preference: {user['investment']}
 
-        --- VERIFIED FINANCIAL TOTALS ---
-        Category Breakdown (Percentages):
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        📊 VERIFIED FINANCIAL DATA (DO NOT RE-CALCULATE)
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        Category Breakdown (%):
         {summary}
 
-        Behavioral & Mathematical Insights (CRITICAL):
+        Behavioral Insights (STRICT TRUTH):
         {behavioral_insights}
 
-        --- RAW TRANSACTION HISTORY ---
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        🧠 SYSTEM-DETECTED SCENARIO (SOURCE OF TRUTH)
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        {scenario}
+
+        Possible values:
+        - BURNER → expenses > income
+        - SAVER → positive savings
+        - UNTRACKED_SPENDING → high cash/misc usage
+
+        🚨 You MUST follow this scenario. Do NOT guess.
+
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        📂 RAW TRANSACTION DATA (Use ONLY if needed)
+        ━━━━━━━━━━━━━━━━━━━━━━━
         {csv_data}
 
-        CRITICAL RULES FOR AI:
-        1. DO NOT RECALCULATE TOTALS: Trust the "EXACT MATH" provided in the insights. 
-        2. STRICT CURRENCY: Use the Indian Rupee symbol (₹).
-        3. EXPERT KNOWLEDGE: If the user asks general questions (e.g., "How to make passive income", "What is an SIP?"), ignore their CSV data and provide expert, actionable advice tailored to a {user['profession']} in India. Quote philosophies from top investors if relevant.
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        🚨 CORE RULES (STRICT)
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        1. NEVER recalculate totals (use given math only)
+        2. ALWAYS use ₹ symbol
+        3. ALWAYS quantify advice in ₹ (monthly/yearly impact)
+        4. DO NOT give generic advice
+        5. DO NOT say "it depends" — take clear decisions
+        6. Be direct, slightly strict, and practical
 
-        SCENARIO-BASED ROUTING (MANDATORY LOGIC):
-        IF QUERY NEED TO ANSWER USING TRANSACTION THEN USE CSV DATA OTHERWISE USE SCENARIO BASED REPLY
-        When the user asks for a "Plan", "Analysis", or "Advice" based on their data, you MUST diagnose their situation using the insights and apply the correct strategy:
-        - FROM CATEGORY BREAKDOWN IF CASH WITHDRAW OR Miscellaneous CATEGORY PERCETAGE IS VERY LARGE THEN GIVE ADVICE USINF 
-        FINANCIAL PLANNING RESOURCES LIKE Financial Planning Toolkit (ICSI) ALSO SUGGEST TO NOTE CATEGORY AT THE TIME OF UPI TRANSFER
-        AND OTHER RELEVENT SUGGESTION TO TRACK THEIR EXPENSES SO THAT YOU CAN MAKE A PERSONALISED PLAN
-        - SCENARIO A: DEBT/EMI HEAVY (If they have significant Loan/EMI categories)
-          -> Strategy: Focus strictly on debt reduction (Avalanche vs. Snowball method). Warn them about interest rates.
-        - SCENARIO B: THE BURNER (If Net Savings is NEGATIVE)
-          -> Strategy: Focus entirely on "Plugging the Leak". Identify the top 2 wasteful categories and give strict daily budgets to recover the deficit.
-        - SCENARIO C: THE SAVER (If Net Savings is POSITIVE)
-          -> Strategy: Focus on wealth generation. Since they are saving money, advise them on SIPs, Index Funds, and Emergency Funds based on their {user['investment']} interest.
-         
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        🧭 DECISION LOGIC
+        ━━━━━━━━━━━━━━━━━━━━━━━
 
-        FORMATTING RULES (For Personal Analysis Queries):
-        ### 🩺 Your Financial Diagnosis
-        [State their exact scenario (A, B, or C) and a 2-sentence reality check based on the EXACT MATH OR CAAN BE MORE THAN ONE SCENARIO.]
-        
-        ### 🗺️ Your Custom Financial Plan
-        [Detail the specific strategy based on their scenario]
-        
-        ### ❓ Recommend THE Questions THAT USER CAN ASK
-        * [Follow-up question 1]
-        * [Follow-up question 2]
-        * [Follow-up question 3]
+        IF scenario includes:
+
+        👉 BURNER:
+        - Identify top 2 wasteful categories
+        - Give STRICT cut recommendations (₹ per month)
+        - Suggest survival budget
+
+        👉 SAVER:
+        - Suggest SIP amount (₹ specific)
+        - Recommend allocation (equity/debt/emergency)
+        - Focus on wealth building
+
+        👉 UNTRACKED_SPENDING:
+        - Highlight danger of cash/misc spending
+        - Suggest tracking system (UPI tagging)
+        - Reduce leakage
+
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        📊 OUTPUT FORMAT (MANDATORY)
+        ━━━━━━━━━━━━━━━━━━━━━━━
+
+        ### 🧠 Financial Health Summary
+        Explain user's situation in 2–3 lines using REAL numbers.
+
+        ### 🩺 Diagnosis
+        Clearly state:
+        - Scenario (Burner / Saver / etc.)
+        - Biggest financial mistake
+
+        ### 💸 Cost Leakage (if any)
+        Identify where money is being wasted (with % + ₹ estimate)
+
+        ### 🗺️ Action Plan (STEP-BY-STEP)
+        Give 3–5 VERY SPECIFIC actions:
+        - Include ₹ values
+        - Example: “Reduce Swiggy spending by ₹3000/month”
+
+        ### 📈 Financial Impact
+        Show outcome if user follows plan:
+        - Monthly savings
+        - Yearly impact
+
+        ### 🔮 Future Projection
+        Based on current behavior:
+        - What will happen in 6 months?
+
+        ### ❓ Smart Follow-up Questions
+        Suggest 3 intelligent next questions
+
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        🎯 FINAL INSTRUCTION
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        Act like a real financial advisor who is responsible for improving this user's financial life.
+        Be precise. Be actionable. Be data-driven.
         """
 
         formatted_contents = []
