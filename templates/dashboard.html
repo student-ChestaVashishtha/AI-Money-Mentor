@@ -33,7 +33,7 @@
                     <p style="color: var(--text-muted);">{{ user.profession }} | Target: {{ user.investment }}</p>
                 </div>
             </header>
-
+            
             <div class="card" style="margin-bottom: 2rem;">
                 <h3>Upload Bank Statement (CSV)</h3>
                 <form method="POST" enctype="multipart/form-data" class="upload-area">
@@ -184,7 +184,7 @@
             // ==========================================
             const headings = document.querySelectorAll('.ai-response h3');
             headings.forEach(h3 => {
-                if (h3.innerText.includes('Recommend THE Questions THAT USER CAN ASK')) {
+                if (h3.innerText.includes('Smart Follow-up Questions that user can ask')) {
                     let nextElement = h3.nextElementSibling;
                     
                     if (nextElement && nextElement.tagName === 'UL') {

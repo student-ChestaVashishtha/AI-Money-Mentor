@@ -19,13 +19,19 @@
             color: #991b1b;
             border: 1px solid #f87171;
         }
+        /* Subtle styling for nested form sections */
+        .nested-section {
+            background: #f8fafc; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            border: 1px solid #e2e8f0;
+        }
     </style>
 </head>
 <body>
     <div class="auth-wrapper">
-        <div class="card auth-card">
-            
-            {% with messages = get_flashed_messages(with_categories=true) %}
+        <div class="card auth-card" style="max-width: 500px;"> {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }}">
@@ -36,19 +42,72 @@
             {% endwith %}
 
             <h2>Create Profile</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Help the AI understand your life stage for hyper-personalized financial planning.</p>
+            
             <form method="POST">
                 <div class="form-group"><label>Name</label><input type="text" name="name" class="form-control" required></div>
-                <div class="form-group"><label>Age</label><input type="number" name="age" class="form-control" required></div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Age</label><input type="number" name="age" class="form-control" required></div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Gender</label>
+                        <select name="gender" class="form-control" required>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-group"><label>Profession</label><input type="text" name="profession" class="form-control" required></div>
                 <div class="form-group"><label>Monthly Salary (₹)</label><input type="number" name="salary" class="form-control" required></div>
                 
                 <div class="form-group">
                     <label>Marital Status</label>
-                    <select name="marital" class="form-control">
-                        <option value="Married">Married</option>
+                    <select name="marital" id="marital_status" class="form-control" onchange="toggleProfileFields()">
                         <option value="Unmarried">Unmarried</option>
+                        <option value="Married">Married</option>
                     </select>
                 </div>
+
+                <div id="married-section" class="nested-section" style="display: none;">
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label>Do you have children?</label>
+                        <select name="has_children" id="has_children" class="form-control" onchange="toggleChildrenFields()">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+
+                    <div id="children-details" style="display: none; flex-direction: column; gap: 10px; margin-top: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>How many children?</label>
+                            <input type="number" name="child_count" class="form-control" placeholder="E.g., 2">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Children's Ages (Comma separated)</label>
+                            <input type="text" name="child_ages" class="form-control" placeholder="E.g., 4, 7">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Approx. Annual Education Fees (₹)</label>
+                            <input type="number" name="child_fees" class="form-control" placeholder="E.g., 150000">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Pre-existing Health Conditions (Affects Insurance)</label>
+                    <select name="health_issues" class="form-control">
+                        <option value="None">None</option>
+                        <option value="Minor">Minor (E.g., Asthma, BP)</option>
+                        <option value="Major">Major (E.g., Diabetes, Heart Condition)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Total Monthly EMI / Loan Obligations (₹)</label>
+                    <input type="number" name="monthly_emi" class="form-control" placeholder="E.g., 12000" value="0">
+                </div>
+
                 <div class="form-group">
                     <label>Investment Goal</label>
                     <select name="investment" class="form-control">
@@ -57,12 +116,48 @@
                         <option value="No Interest">No Interest</option>
                     </select>
                 </div>
-                <button type="submit" class="btn" style="margin-top: 10px;">Register</button>
+                
+                <button type="submit" class="btn" style="margin-top: 15px; width: 100%;">Register</button>
             </form>
-            <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem;">
-                Already have an account? <a href="{{ url_for('login') }}">Login</a>
+            <p style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem;">
+                Already have an account? <a href="{{ url_for('login') }}" style="color: var(--primary-color); font-weight: 600;">Login</a>
             </p>
         </div>
     </div>
+
+    <script>
+        function toggleProfileFields() {
+            const maritalStatus = document.getElementById("marital_status").value;
+            const marriedSection = document.getElementById("married-section");
+            
+            if (maritalStatus === "Married") {
+                marriedSection.style.display = "block";
+            } else {
+                marriedSection.style.display = "none";
+                document.getElementById("has_children").value = "No";
+                toggleChildrenFields();
+            }
+        }
+
+        function toggleChildrenFields() {
+            const hasChildren = document.getElementById("has_children").value;
+            const childrenDetails = document.getElementById("children-details");
+            
+            if (hasChildren === "Yes") {
+                childrenDetails.style.display = "flex";
+            } else {
+                childrenDetails.style.display = "none";
+                // Optionally clear inputs when hidden so backend doesn't get old data
+                document.querySelector('input[name="child_count"]').value = '';
+                document.querySelector('input[name="child_ages"]').value = '';
+                document.querySelector('input[name="child_fees"]').value = '';
+            }
+        }
+
+        // Run on load to ensure correct state (useful if browser auto-fills or on back navigation)
+        document.addEventListener("DOMContentLoaded", function() {
+            toggleProfileFields();
+        });
+    </script>
 </body>
 </html>
