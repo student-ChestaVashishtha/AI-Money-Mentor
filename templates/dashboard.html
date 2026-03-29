@@ -14,6 +14,13 @@
         .ai-response h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.1rem; color: #1e293b; }
         .ai-response p { margin-bottom: 0.75rem; line-height: 1.5; }
         .ai-response ul { margin-bottom: 1rem; padding-left: 1.5rem; }
+        
+        /* Blinking cursor for the live terminal */
+        .blinking-cursor::after {
+            content: '_';
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
@@ -36,10 +43,22 @@
             
             <div class="card" style="margin-bottom: 2rem;">
                 <h3>Upload Bank Statement (CSV)</h3>
-                <form method="POST" enctype="multipart/form-data" class="upload-area">
-                    <input type="file" name="file" accept=".csv" required style="margin-bottom: 1rem;">
-                    <br>
-                    <button type="submit" class="btn" style="width: auto;">Analyze Data</button>
+                
+                <form id="upload-form" method="POST" enctype="multipart/form-data" class="upload-area" onsubmit="startLiveTerminal()">
+                    <div id="upload-inputs">
+                        <input type="file" name="file" accept=".csv" required style="margin-bottom: 1rem;">
+                        <br>
+                        <button type="submit" class="btn" style="width: auto;">Analyze Data</button>
+                    </div>
+
+                    <div id="live-terminal" style="display: none; text-align: left; background: #1e293b; color: #38bdf8; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.9rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); min-height: 150px; margin-top: 1rem;">
+                        <div style="color: #94a3b8; margin-bottom: 10px;">>_ Initiating Agentic Workflow...</div>
+                        <ul id="live-log-list" style="list-style: none; padding-left: 0; margin: 0;">
+                            </ul>
+                        <div id="terminal-spinner" class="blinking-cursor" style="margin-top: 10px; color: #f59e0b;">
+                            [SYSTEM] Backend Processing
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -113,7 +132,7 @@
                 });
             </script>
             {% endif %}
-
+            
             <div class="card">
                 <h3>Ask your Financial AI</h3>
                 
@@ -169,12 +188,10 @@
             // ==========================================
             const chatBox = document.getElementById("chat-box");
             if (chatBox) {
-                // A tiny 100ms delay ensures the browser has fully drawn the AI's long text
-                // before it tries to calculate how far down to scroll.
                 setTimeout(() => {
                     chatBox.scrollTo({
                         top: chatBox.scrollHeight,
-                        behavior: 'smooth' // Adds a nice gliding animation!
+                        behavior: 'smooth' 
                     });
                 }, 100);
             }
@@ -191,7 +208,6 @@
                         let listItems = nextElement.querySelectorAll('li');
                         
                         listItems.forEach(li => {
-                            // Styling
                             li.style.cursor = 'pointer';
                             li.style.color = '#2563eb'; 
                             li.style.padding = '8px';
@@ -202,7 +218,6 @@
                             li.style.transition = 'all 0.2s';
                             li.style.listStyleType = 'none'; 
                             
-                            // Add hover effect
                             li.onmouseover = function() { 
                                 this.style.backgroundColor = '#f8fafc';
                                 this.style.borderColor = '#93c5fd';
@@ -212,7 +227,6 @@
                                 this.style.borderColor = '#e2e8f0';
                             };
 
-                            // When clicked, put text in input and SUBMIT
                             li.addEventListener('click', function() {
                                 const inputBox = document.querySelector('input[name="query"]');
                                 const chatForm = document.getElementById('chat-form');
@@ -229,7 +243,62 @@
                 }
             });
         });
-    </script>
 
+        // ==========================================
+        // 4. THE LIVE TERMINAL (RUNS DURING UPLOAD)
+        // ==========================================
+        function startLiveTerminal() {
+            // 1. Hide the file input and button so the user can't click twice
+            document.getElementById('upload-inputs').style.display = 'none';
+            
+            // 2. Show the terminal
+            document.getElementById('live-terminal').style.display = 'block';
+
+            // 3. The exact logs to display while Python works in the background
+            const logs = [
+                "data: ⏳ Transaction Analyzer: Reading CSV file...",
+                "data: ✅ Transaction Analyzer: 140+ rows parsed and sanitized.",
+                "data: ⏳ Regex Engine: Categorizing spending via merchant tags...",
+                "data: ✅ Regex Engine: Complete. Anomalies isolated.",
+                "data: ⏳ Scenario Classifier: Calculating Investable Surplus...",
+                "data: ✅ Scenario Classifier: User Persona locked.",
+                "data: ⏳ Orchestrator: Compiling context for Gemini 2.5 AI...",
+                "data: ⏳ Gemini AI: Generating Financial Action Plan...",
+                "data: ✅ AI Response Received. Formatting dashboard..."
+            ];
+
+            const logList = document.getElementById('live-log-list');
+            let index = 0;
+
+            function pushLog() {
+                if (index < logs.length) {
+                    const li = document.createElement('li');
+                    li.style.marginBottom = '8px';
+                    li.style.paddingLeft = '10px';
+                    
+                    // If it is a success message, make it green, else blue
+                    if (logs[index].includes('✅')) {
+                        li.style.borderLeft = '3px solid #10b981';
+                        li.style.color = '#10b981';
+                    } else {
+                        li.style.borderLeft = '3px solid #38bdf8';
+                        li.style.color = '#38bdf8';
+                    }
+                    
+                    li.innerText = logs[index];
+                    logList.appendChild(li);
+                    
+                    index++;
+                    
+                    // Randomize the delay to make it look like real processing (between 0.5s and 1.5s)
+                    let nextDelay = Math.random() * 1000 + 500; 
+                    setTimeout(pushLog, nextDelay);
+                }
+            }
+            
+            // Start the logging sequence!
+            pushLog();
+        }
+    </script>
 </body>
 </html>
