@@ -188,13 +188,16 @@ pip install -r requirements.txt
 **3. Set Environment Variables**
 Configure your Google Gemini API key:
 
-'''bash
+
 # For Windows
+```bash
 set GEMINI_API_KEY=your_api_key
+```
 
 # For Mac/Linux
+```bash
 export GEMINI_API_KEY=your_api_key
-'''
+```
 
 **4. Run the Application**
 
