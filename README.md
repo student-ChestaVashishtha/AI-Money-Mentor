@@ -172,6 +172,25 @@ AI-Money-Mentor/
 
 ---
 
+## 📊 Sample Dataset
+
+This project uses a synthetic financial dataset that mimics real-world bank statements (UPI transactions, bills, salary credits, etc.).
+
+**uploads/sample_statement.csv**
+
+Due to privacy concerns, no real user data is included. The dataset is fully anonymized and safe for public use.
+
+### Data Format
+**Columns**:
+- Date
+- Description
+- Reference
+- Amount
+- Type (credit/debit)
+- Balance
+
+---
+
 ## 🚀 Setup
 
 **1. Clone the Repository**
@@ -206,6 +225,8 @@ python app.py
 ```
 
 The application will be hosted locally at http://127.0.0.1:5000
+
+
 
 ---
 
