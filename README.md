@@ -155,18 +155,6 @@ Every response includes:
 
 ---
 
-## ⚙️ Tech Stack
-
-| Layer           | Tech                   |
-| --------------- | ---------------------- |
-| Backend         | Flask                  |
-| AI Engine       | Gemini API             |
-| Data Processing | Pandas                 |
-| Session Memory  | Flask-Session          |
-| Frontend        | HTML + CSS + Bootstrap |
-
----
-
 ## 📂 Project Structure
 
 ```bash
