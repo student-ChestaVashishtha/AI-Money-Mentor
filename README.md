@@ -29,26 +29,34 @@ India has **14+ crore demat accounts**, but most retail investors:
 
 ---
 
-## 🔥 Core Innovation
+## 🔥 Core Innovation: Multi-Agent Architecture
 
 Unlike typical finance apps:
 
 ❌ Not just tracking
 ❌ Not just chatbot
 
-✅ **Scenario-based financial reasoning system**
+FinSaarthi AI moves beyond standard prompting by utilizing a specialized agentic workflow. Data flows through dedicated agents, each handling one stage of the reasoning pipeline:
+
+1. 🧾 **Transaction Analyzer Agent:** Parses raw bank CSVs, auto-cleanses, normalizes, and structures messy real-world data.
+2. 🗂️ **Categorization Agent (Smart Regex Engine):** Utilizes pattern recognition to classify income/expenses and isolates repeat merchants and subscriptions.
+3. 🧠 **Scenario Agent (The Diagnostic Core):** Evaluates categorized data to detect behavioral patterns and assigns a definitive health status:
+   * 🔴 **BURNER:** Expenses exceed income; low/negative savings.
+   * 🟢 **SAVER:** Positive net savings; ready for wealth multiplication.
+   * 🟡 **RISKY:** High EMI burden, volatile cash flow, or critical lack of insurance.
+4. 🗺️ **Planning Agent (The Strategist):** Synthesizes the user's scenario and profile to generate a hyper-personalized roadmap with actionable monthly targets and risk mitigation steps.
 
 ---
 
-## 🧠 Intelligent Scenario Engine
+## ⚙️ Tech Stack
 
-The system automatically classifies users into:
-
-* 🔴 **BURNER** → Spending > Income
-* 🟢 **SAVER** → Positive savings
-* 🟡 **UNTRACKED_SPENDING** → High cash / unknown usage
-
-👉 This becomes the **source of truth for AI decisions**
+| Layer | Technology |
+| :--- | :--- |
+| **AI Decision Engine** | Google Gemini 2.5 Flash API |
+| **Backend & Orchestration** | Flask, Python |
+| **Data Processing** | Pandas, Regex |
+| **Session Management** | Flask-Session |
+| **Frontend** | HTML, CSS, Bootstrap |
 
 ---
 
@@ -178,28 +186,41 @@ AI-Money-Mentor/
 
 ## 🚀 Setup
 
+**1. Clone the Repository**
 ```bash
-git clone https://github.com/student-ChestaVashishtha/AI-Money-Mentor.git
+git clone [https://github.com/student-ChestaVashishtha/AI-Money-Mentor.git](https://github.com/student-ChestaVashishtha/AI-Money-Mentor.git)
 cd AI-Money-Mentor
+```
 
+**2. Install Dependencies**
+```bash
 pip install -r requirements.txt
+````
 
-set GEMINI_API_KEY=your_api_key  # Windows
-export GEMINI_API_KEY=your_api_key  # Mac/Linux
+**3. Set Environment Variables**
+Configure your Google Gemini API key:
 
+'''bash
+# For Windows
+set GEMINI_API_KEY=your_api_key
+
+# For Mac/Linux
+export GEMINI_API_KEY=your_api_key
+'''
+
+**4. Run the Application**
+
+```bash
 python app.py
 ```
+
+The application will be hosted locally at http://127.0.0.1:5000
 
 ---
 
 ## 📸 Demo
 
-👉 Add screenshots here:
-
-* Dashboard
-* Insights
-* AI Response
-* Upload Flow
+https://drive.google.com/file/d/1Ja-QeHqNbkjEAUdfmu9mh-J1JJAHB-R0/view?usp=sharing
 
 ---
 
